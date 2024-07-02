@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id'); // Add the user_id field
             $table->string('name')->nullable();
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
@@ -22,6 +23,8 @@ return new class extends Migration
             $table->string('quantity')->nullable();
             $table->string('price')->nullable();
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade'); // Add foreign key constraint
         });
     }
 

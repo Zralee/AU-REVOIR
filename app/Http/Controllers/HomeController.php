@@ -88,37 +88,28 @@ else{
 
 }
     
-    public function addcart(Request $request,$id)
-    {
-        if(Auth::id())
-        {
-            $user=auth()->user();
-            $product=product::find($id);
-            $cart=new cart;
+public function addcart(Request $request, $id)
+{
+    if (Auth::id()) {
+        $user = auth()->user();
+        $product = product::find($id);
+        $cart = new cart;
 
-            $cart->name=$user->name;
+        $cart->user_id = $user->id; // Set the user_id field
+        $cart->name = $user->name;
+        $cart->phone = $user->phone;
+        $cart->address = $user->address;
+        $cart->product_title = $product->title;
+        $cart->price = $product->price;
+        $cart->quantity = $request->quantity;
 
-            $cart->phone=$user->phone;
+        $cart->save();
 
-            $cart->address=$user->address;
-
-            $cart->product_title=$product->title;
-            
-            $cart->price=$product->price;
-
-            $cart->quantity=$request->quantity;
-
-            $cart->save();
-
-            return redirect()->back()->with('message','Product Added To Cart Successfully');
-        }
-
-        else
-        {
-            return redirect('login');
-        }
-
+        return redirect()->back()->with('message', 'Product Added To Cart Successfully');
+    } else {
+        return redirect('login');
     }
+}
 
     public function showcart()
     {
@@ -139,42 +130,44 @@ else{
 
     public function confirmorder(Request $request)
     {
-       $user=auth()->user();
-
-       $name=$user->name;
-
-       $phone=$user->phone;
-
-       $address=$user->address;
-
-    //    if ($request->productname == null) 
-    //    {
-    //      return redirect()->back()->with('message', 'First add something in CART'); 
-    //    }
-
-       foreach($request->productname as $key=>$productname)
-       {
-
-            $order=new order;
-
-            $order->product_name=$request->productname[$key];
-            $order->price=$request->price[$key];
-            $order->quantity=$request->quantity[$key];
-            $order->name=$name;
-            $order->phone=$phone;
-            $order->address=$address;
-
-            $order->status='not delivered';
-
-            $order->save();
-
-       }
-       DB::table('carts')->where('phone',$phone)->delete();
-
-
-       return redirect()->back()->with('message','Product Ordered Successfully');
+        $user = auth()->user();
+        $name = $user->name;
+        $phone = $user->phone;
+        $address = $user->address;
+    
+        foreach ($request->productname as $key => $productname) {
+            $product = Product::where('title', $productname)->first();
+    
+            // Check if the product exists and has enough stock
+            if ($product && $product->quantity >= $request->quantity[$key]) {
+                $order = new Order;
+    
+                $order->user_id = $user->id; // Set the user_id field
+                $order->product_name = $request->productname[$key];
+                $order->price = $request->price[$key];
+                $order->quantity = $request->quantity[$key];
+                $order->name = $name;
+                $order->phone = $phone;
+                $order->address = $address;
+                $order->status = 'not delivered';
+    
+                $order->save();
+    
+                // Decrease the product stock
+                $product->quantity -= $request->quantity[$key];
+                $product->save();
+            } else {
+                // If the product does not exist or not enough stock, return with an error message
+                return redirect()->back()->with('error', 'Not enough stock for ' . $productname);
+            }
+        }
+    
+        DB::table('carts')->where('phone', $phone)->delete();
+    
+        // Redirect to payment gateway
+        return redirect()->route('payment.gateway')->with('message', 'Product Ordered Successfully');
     }
-
+    
 
     public function aboutus()
     {

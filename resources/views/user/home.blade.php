@@ -12,6 +12,8 @@
 
     <title>AU REVOIR</title>
 
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/images/logo-au-revoir.png') }}">
+
     <!-- Bootstrap core CSS -->
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
