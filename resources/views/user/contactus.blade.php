@@ -119,7 +119,7 @@
           </div>
           <div class="col-md-4">
             <div class="left-content">
-              <h4>About our office</h4>
+              <h4>About our store</h4>
               <p>We aim to showcase and sell a wide selection of carefully curated streetwear products, ranging from t-shirts, jackets, pants, to interesting accessories that will perfectly complement your look.<br>
               <ul class="social-icons">
                 <li><a href="https://www.facebook.com/"><i class="fa fa-facebook"></i></a></li>
