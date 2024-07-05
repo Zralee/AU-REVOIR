@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-    public function show()
+    public function show(Request $request)
     {
-        // Logic to show the payment gateway
-        return view('payment.gateway'); // Ensure this view exists
+        $ordersId = $request->get('orders');
+        $snapToken = $request->get('snapToken');
+
+        $orders = Order::whereIn('id', $ordersId)->get();
+
+        // \Log::info('Order Data:', $orders);
+        // \Log::info('Snap Token:', ['snapToken' => $snapToken]);
+
+        return view('payment.gateway', compact('orders', 'snapToken'));
     }
 }

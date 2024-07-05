@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 
 /*use Illuminate\Support\Facades\Route;
@@ -40,6 +41,9 @@ Route::get('/aboutus', [HomeController::class, 'aboutus']);
 Route::get('/ourproducts', [HomeController::class, 'ourproducts']);
 Route::get('/contactus', [HomeController::class, 'contactus']);
 Route::get('/payment-gateway', [PaymentController::class, 'show'])->name('payment.gateway');
+Route::resource('orders', OrderController::class)->only(['index', 'show']);
+Route::get('/payment/show', [PaymentController::class, 'show'])->name('payment.show');
+
 
 Route::middleware(['auth', 'admin.rule'])->group(function () {
     Route::get('/product', [AdminController::class, 'product']);
