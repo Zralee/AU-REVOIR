@@ -68,7 +68,11 @@
                   <i class="fas fa-shopping-cart"></i>  
                   Cart[{{$count}}]</a>
                 </li>
-                    
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url('showorder') }}">
+                      <i class="fas fa-box"></i> Order[{{ $orderCount }}]
+                    </a>
+                  </li>
                     <x-app-layout>
 
                     </x-app-layout>

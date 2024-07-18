@@ -28,14 +28,16 @@ class HomeController extends Controller
             if ($usertype == '1') {
                 return view('admin.home');
             } else {
-                $data = product::paginate(4);
+                $data = product::paginate(8);
                 $user = Auth::user();
                 $count = cart::where('phone', $user->phone)->count();
-                return view('user.home', compact('data', 'count'));
+                $orders = Order::where('payment_status', 2)->get();
+                $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
+                return view('user.home', compact('data', 'count', 'orders','orderCount'));
             }
         } else {
             // Logika untuk pengguna yang belum login
-            $data = product::paginate(4);
+            $data = product::paginate(8);
             return view('user.home', compact('data'))->with('count', 0);
         }
     }
@@ -45,7 +47,7 @@ class HomeController extends Controller
         if (Auth::id()) {
             return redirect('redirect');
         } else {
-            $data = product::paginate(4);
+            $data = product::paginate(8);
             return view('user.home', compact('data'));
         }
     }
@@ -61,7 +63,7 @@ class HomeController extends Controller
             $cart = Cart::where('phone', $user->phone)->get();
             $count = Cart::where('phone', $user->phone)->count();
             if ($search == '') {
-                $data = Product::paginate(4);
+                $data = Product::paginate(8);
                 return view('user.home', compact('data', 'count', 'search'));
             }
 
@@ -109,7 +111,16 @@ class HomeController extends Controller
         $user = auth()->user();
         $cart = cart::where('phone', $user->phone)->get();
         $count = cart::where('phone', $user->phone)->count();
-        return view('user.showcart', compact('count', 'cart'));
+        $orders = Order::where('payment_status', 2)->get();
+        $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
+        return view('user.showcart', compact('count', 'cart', 'orders','orderCount'));
+    }
+    public function showorder()
+    {
+        $orders = Order::where('payment_status', 2)->get();
+        $count = Cart::count(); // Menghitung jumlah item di cart (sesuaikan dengan kebutuhan Anda)
+        $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar
+        return view('user.showorder', compact('orders', 'count', 'orderCount'));
     }
 
     public function deletecart($id)
@@ -121,92 +132,205 @@ class HomeController extends Controller
 
 
 
-    public function confirmorder(Request $request)
-    {
-        $user = auth()->user();
-        $name = $user->name;
-        $phone = $user->phone;
-        $address = $user->address;
 
-        $orders = [];
+    public function updatePaymentStatus(Request $request)
+{
+    $orderId = $request->input('order_id');
+    $paymentStatus = $request->input('payment_status');
 
-        //dd($request->productname);
-        foreach ($request->productname as $key => $productname) {
-            //dd($productname);
-            $product = Product::where('title', $productname)->first();
+    $order = Order::find($orderId);
+    if ($order) {
+        $order->payment_status = $paymentStatus;
+        $order->save();
 
-            // Check if the product exists and has enough stock
-            //dd($product, $request->quantity[$key], $product->quantity >= $request->quantity[$key]);
-            if ($product && $product->quantity >= $request->quantity[$key]) {
-                $order = new Order;
+        if ($paymentStatus == 2) {
+            // Hapus produk dari keranjang
+            $user = auth()->user();
+            $products = $order->product_name; // Asumsikan product_name menyimpan nama produk dalam bentuk array atau string
 
-                $order->user_id = $user->id; // Set the user_id field
-                $order->product_name = $request->productname[$key];
-                $order->price = $request->price[$key];
-                $order->quantity = $request->quantity[$key];
-                $order->name = $name;
-                $order->phone = $phone;
-                $order->address = $address;
-                $order->status = 'not delivered';
-
-                $order->save(); // pass idnya asaja ya
-
-                // Decrease the product stock
-                $product->quantity -= $request->quantity[$key];
-                $product->save();
-
-                $orders[] = $order->id;
-            } else {
-                //dd('Not enough stock');
-                // If the product does not exist or not enough stock, return with an error message
-                return redirect()->back()->with('error', 'Not enough stock for ' . $productname);
+            // Menghapus produk dari keranjang berdasarkan nama produk
+            foreach ($products as $product) {
+                Cart::where('user_id', $user->id)
+                    ->where('product_title', $product)
+                    ->delete();
             }
         }
 
-        //DB::table('carts')->where('phone', $phone)->delete(); // ini harusnya delete ketika payment success (?)
+        return response()->json(['success' => true]);
+    }
 
-        // Prepare $payload based on $orders
-        $item_details = [];
-        $gross_amount = 0;
+    return response()->json(['success' => false]);
+}
+//     public function clearCartAfterPayment()
+// {
+//     // Menghapus semua item dari keranjang untuk user yang sedang login
+//     Cart::where('user_id', auth()->id())->delete();
 
-        foreach ($orders as $orderId) {
-            $order = Order::find($orderId);
-            $item_details[] = [
-                'id'            => $order->id,
-                'price'         => $order->price,
-                'quantity'      => $order->quantity,
-                'name'          => $order->product_name,
-                'brand'         => 'Product Brand', // Replace with actual brand information if available
-                'category'      => 'Product Category', // Replace with actual category information if available
-                'merchant_name' => config('app.name'),
-            ];
+//     return response()->json(['success' => true]);
+// }
 
-            $gross_amount += $order->price * $order->quantity; // Calculate total gross amount
+
+public function confirmOrder(Request $request)
+{
+    $user = auth()->user();
+    $name = $user->name;
+    $phone = $user->phone;
+    $address = $user->address;
+
+    $orders = [];
+
+    // Informasi penerima dari form
+    $recipientName = $request->input('recipient_name');
+    $recipientEmail = $request->input('recipient_email');
+    $recipientAddress = $request->input('recipient_address');
+    $courier = $request->input('courier');
+    $courierFee = $courier === 'JNE' ? 25000 : ($courier === 'JNT' ? 20000 : 0);
+
+    // Proses setiap produk dalam keranjang
+    foreach ($request->productname as $key => $productname) {
+        $product = Product::where('title', $productname)->first();
+
+        // Check if the product exists and has enough stock
+        if ($product && $product->quantity >= $request->quantity[$key]) {
+            // Check if the order already exists
+            $existingOrder = Order::where([
+                ['user_id', '=', $user->id],
+                ['product_name', '=', $request->productname[$key]],
+                ['price', '=', $request->price[$key]],
+                ['quantity', '=', $request->quantity[$key]],
+                ['recipient_name', '=', $recipientName],
+                ['recipient_email', '=', $recipientEmail],
+                ['recipient_address', '=', $recipientAddress],
+                ['courier', '=', $courier],
+                ['courier_fee', '=', $courierFee],
+                ['status', '=', 'not delivered']
+            ])->first();
+
+            if ($existingOrder) {
+                // Skip this iteration if order already exists
+                continue;
+            }
+
+            $order = new Order;
+
+            $order->user_id = $user->id; // Set the user_id field
+            $order->product_name = $request->productname[$key];
+            $order->price = $request->price[$key];
+            $order->quantity = $request->quantity[$key];
+            $order->name = $name;
+            $order->phone = $phone;
+            $order->address = $address;
+            $order->recipient_name = $recipientName;
+            $order->recipient_email = $recipientEmail;
+            $order->recipient_address = $recipientAddress;
+            $order->courier = $courier;
+            $order->courier_fee = $courierFee;
+            $order->total_amount = ($request->price[$key] * $request->quantity[$key]) + $courierFee; // Menghitung total_amount
+            $order->status = 'not delivered';
+            $order->payment_status = '1'; // Menggunakan string untuk inisialisasi payment_status
+
+            $order->save();
+
+            // Decrease the product stock
+            $product->quantity -= $request->quantity[$key];
+            $product->save();
+
+            $orders[] = $order->id;
+        } else {
+            return redirect()->back()->with('error', 'Not enough stock for ' . $productname);
         }
+    }
 
-        // Construct the $payload array
-        $payload = [
-            'transaction_details' => [
-                'order_id'     => 123, // Assuming first order's ID as order_id
-                'gross_amount' => $gross_amount, // Total gross amount
-            ],
-            'customer_details' => [
-                'first_name' => $name,
-                'email'      => $user->email,
-            ],
-            'item_details' => $item_details, // Array of item details for each order
+    // Check if orders were created
+    if (empty($orders)) {
+        return redirect()->back()->with('error', 'No orders were created.');
+    }
+
+    // Prepare $payload based on $orders
+    $item_details = [];
+    $gross_amount = 0;
+
+    foreach ($orders as $orderId) {
+        $order = Order::find($orderId);
+        $item_details[] = [
+            'id'            => $order->id,
+            'price'         => $order->price,
+            'quantity'      => $order->quantity,
+            'name'          => $order->product_name,
+            'total'         => $order->total_amount,
+            'merchant_name' => config('app.name'),
         ];
 
-        // Create Snap Token
-        $snapToken = $this->createSnapTokenService->getSnapToken($payload);
-
-        // Redirect to payment gateway
-        return redirect()->route('payment.show', [
-            'orders' => $orders,  // Passing all orders
-            'snapToken' => $snapToken,
-            'message' => 'Product Ordered Successfully'
-        ]);
+        $gross_amount += $order->total_amount;
     }
+
+    $item_details[] = [
+        'id'            => 'courier_fee',
+        'price'         => $courierFee,
+        'quantity'      => 1,
+        'name'          => 'Courier Fee',
+        'total'         => $courierFee,
+        'merchant_name' => config('app.name'),
+    ];
+
+    // Add courier fee to total gross amount
+    $gross_amount += $courierFee;
+
+    // Construct the $payload array
+    $payload = [
+        'transaction_details' => [
+            'order_id'     => $orders[0], // Assuming first order's ID as order_id
+            'gross_amount' => $gross_amount, // Total gross amount including courier fee
+        ],
+        'customer_details' => [
+            'first_name' => $recipientName,
+            'email'      => $recipientEmail,
+        ],
+        'item_details' => $item_details, // Array of item details for each order
+    ];
+
+    // Create Snap Token
+    $snapToken = $this->createSnapTokenService->getSnapToken($payload);
+
+    // Redirect to payment gateway
+    return redirect()->route('payment.show', [
+        'orders' => $orders,  // Passing all orders
+        'snapToken' => $snapToken,
+        'courierFee' => $courierFee,
+        'message' => 'Product Ordered Successfully',
+        'orderId' => $orders[0] // Assuming first order's ID as order_id
+    ]);
+}
+
+
+// Tambahkan metode ini untuk mengupdate payment_status setelah pembayaran berhasil
+
+//ini masih belom bisa coyyyyyy
+
+// public function updatePaymentStatus($orderId)
+// {
+//     $order = Order::find($orderId);
+//     if ($order) {
+//         $order->payment_status = '2'; // Menggunakan string untuk payment_status
+//         $order->save();
+//     }
+// }
+
+
+
+public function paymentSuccess(Request $request)
+{
+    $orderId = $request->input('order_id');
+
+    $order = Order::find($orderId);
+    if ($order) {
+        $order->payment_status = '2'; // Menggunakan string untuk payment_status
+        $order->save();
+        return response()->json(['success' => true]);
+    }
+
+    return response()->json(['success' => false]);
+}
 
 
 
@@ -217,7 +341,9 @@ class HomeController extends Controller
         if ($user) {
             $cart = cart::where('phone', $user->phone)->get();
             $count = cart::where('phone', $user->phone)->count();
-            return view('user.aboutus', compact('count', 'cart'));
+            $orders = Order::where('payment_status', 2)->get();
+            $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar
+            return view('user.aboutus', compact('count', 'cart', 'orders','orderCount'));
         } else {
             return view('user.aboutus');
         }
@@ -248,9 +374,24 @@ class HomeController extends Controller
         if ($user) {
             $cart = cart::where('phone', $user->phone)->get();
             $count = cart::where('phone', $user->phone)->count();
-            return view('user.contactus', compact('count', 'cart'));
+            $orders = Order::where('payment_status', 2)->get();
+            $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
+            return view('user.contactus', compact('count', 'cart', 'orders','orderCount'));
         } else {
             return view('user.contactus');
         }
     }
+
+        //     public function showOrderDetails()
+        // {
+        //     $orders = Order::all(); // Ambil semua order dari database
+        //     $ordersTotalAmount = $orders->sum(function($order) {
+        //         return $order->price * $order->quantity;
+        //     });
+
+        //     return view('order-details', [
+        //         'orders' => $orders,
+        //         'ordersTotalAmount' => $ordersTotalAmount,
+        //     ]);
+        // }
 }

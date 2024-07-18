@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 
@@ -41,8 +42,36 @@ Route::get('/aboutus', [HomeController::class, 'aboutus']);
 Route::get('/ourproducts', [HomeController::class, 'ourproducts']);
 Route::get('/contactus', [HomeController::class, 'contactus']);
 Route::get('/payment-gateway', [PaymentController::class, 'show'])->name('payment.gateway');
-Route::resource('orders', OrderController::class)->only(['index', 'show']);
+// Route::resource('orders', OrderController::class)->only(['index', 'show']);
 Route::get('/payment/show', [PaymentController::class, 'show'])->name('payment.show');
+// Route::post('/submit-order', [OrderController::class, 'submitOrder']);
+
+Route::get('/payment-success', function () {
+    return view('payment.payment_success');
+});
+
+Route::post('/update-payment-status', 'PaymentController@updatePaymentStatus')->name('update.payment.status');
+
+
+Route::post('/update-payment-status', [PaymentController::class, 'updatePaymentStatus']);
+
+Route::get('/payment-success', [PaymentController::class, 'paymentSuccess'])->name('payment.success');
+
+Route::post('/payment-success', [HomeController::class, 'paymentSuccess'])->name('payment.success');
+
+// Endpoint untuk menampilkan halaman sukses pembayaran
+Route::get('/payment-success', function () {
+    return view('payment.payment_success');
+})->name('payment.success.page');
+
+
+// Route::post('/clear-cart', 'CartController@clearCartAfterPayment')->name('clear.cart.after.payment');
+
+// Route::get('/clear-cart', [CartController::class, 'clearCartAfterPayment'])->name('clearCartAfterPayment');
+
+// Route::get('/clear-cart', [CartController::class, 'clearCart'])->name('clear.cart');
+
+
 
 
 Route::middleware(['auth', 'admin.rule'])->group(function () {
@@ -55,3 +84,10 @@ Route::middleware(['auth', 'admin.rule'])->group(function () {
     Route::get('/showorder', [AdminController::class, 'showorder']);
     Route::get('/updatestatus/{id}', [AdminController::class, 'updatestatus']);
 });
+
+
+//buat nampilin detail order di home
+// Route::get('/showorder', [OrderController::class, 'showOrder'])->name('showorder');
+// Route::get('/orders', [OrderController::class, 'showOrders'])->name('orders');
+Route::get('/showorder', [HomeController::class, 'showorder']);
+Route::get('/orders', [HomeController::class, 'showOrders'])->name('orders');
