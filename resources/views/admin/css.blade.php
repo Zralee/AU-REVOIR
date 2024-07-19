@@ -1,7 +1,9 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>AU REVOIR Admin</title>
+    <title>AU REVOIR ADMIN</title>
+    <!-- logo icon au-revoir -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/images/logo-au-revoir.png') }}">
     <!-- plugins:css -->
     <link rel="stylesheet" href="admin/assets/vendors/mdi/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="admin/assets/vendors/css/vendor.bundle.base.css">

@@ -14,7 +14,7 @@
                   <span class="count bg-success"></span>
                 </div>
                 <div class="profile-name">
-                  <h5 class="mb-0 font-weight-normal">Admin Revo</h5>
+                  <h5 class="mb-0 font-weight-normal">AU REVOIR</h5>
                   <span>Admin Role</span>
                 </div>
               </div>
@@ -58,14 +58,14 @@
           <li class="nav-item nav-category">
             <span class="nav-link">Navigation</span>
           </li>
-          <li class="nav-item menu-items">
+          <!-- <li class="nav-item menu-items">
             <a class="nav-link" href="index.html">
               <span class="menu-icon">
                 <i class="mdi mdi-speedometer"></i>
               </span>
               <span class="menu-title">Dashboard</span>
             </a>
-          </li>
+          </li> -->
           
           <li class="nav-item menu-items">
             <a class="nav-link" href="{{url('product')}}">
@@ -85,14 +85,14 @@
             </a>
           </li>
 
-          <li class="nav-item menu-items">
+          <!-- <li class="nav-item menu-items">
             <a class="nav-link" href="{{url('showorder')}}">
               <span class="menu-icon">
                 <i class="mdi mdi-file-document-box"></i>
               </span>
               <span class="menu-title">Orders</span>
             </a>
-          </li>
+          </li> -->
 
         </ul>
       </nav>

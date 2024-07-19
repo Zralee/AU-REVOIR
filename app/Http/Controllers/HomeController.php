@@ -20,6 +20,7 @@ class HomeController extends Controller
     {
         $this->createSnapTokenService = $createSnapTokenService;
     }
+    
     public function redirect()
     {
         if (Auth::check()) {
@@ -28,16 +29,15 @@ class HomeController extends Controller
             if ($usertype == '1') {
                 return view('admin.home');
             } else {
-                $data = product::paginate(8);
+                $data = Product::paginate(8);
                 $user = Auth::user();
-                $count = cart::where('phone', $user->phone)->count();
-                $orders = Order::where('payment_status', 2)->get();
-                $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
-                return view('user.home', compact('data', 'count', 'orders','orderCount'));
+                $count = Cart::where('user_id', $user->id)->count();
+                $orders = Order::where('user_id', $user->id)->where('payment_status', 2)->get();
+                $orderCount = Order::where('user_id', $user->id)->where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
+                return view('user.home', compact('data', 'count', 'orders', 'orderCount'));
             }
         } else {
-            // Logika untuk pengguna yang belum login
-            $data = product::paginate(8);
+            $data = Product::paginate(8);
             return view('user.home', compact('data'))->with('count', 0);
         }
     }
@@ -47,7 +47,7 @@ class HomeController extends Controller
         if (Auth::id()) {
             return redirect('redirect');
         } else {
-            $data = product::paginate(8);
+            $data = Product::paginate(8);
             return view('user.home', compact('data'));
         }
     }
@@ -55,30 +55,25 @@ class HomeController extends Controller
     public function search(Request $request)
     {
         $search = $request->search;
-
         $user = auth()->user();
 
-
         if ($user) {
-            $cart = Cart::where('phone', $user->phone)->get();
-            $count = Cart::where('phone', $user->phone)->count();
+            $cart = Cart::where('user_id', $user->id)->get();
+            $count = Cart::where('user_id', $user->id)->count();
             if ($search == '') {
                 $data = Product::paginate(8);
                 return view('user.home', compact('data', 'count', 'search'));
             }
 
             $data = Product::where('title', 'LIKE', '%' . $search . '%')->paginate(4)->withQueryString();
-
             return view('user.home', compact('data', 'count', 'search'));
         } else {
-
             if ($search == '') {
                 $data = Product::paginate(3);
                 return view('user.home', compact('data', 'search'));
             }
 
             $data = Product::where('title', 'LIKE', '%' . $search . '%')->paginate(4)->withQueryString();
-
             return view('user.home', compact('data', 'search'));
         }
     }
@@ -87,10 +82,10 @@ class HomeController extends Controller
     {
         if (Auth::id()) {
             $user = auth()->user();
-            $product = product::find($id);
-            $cart = new cart;
+            $product = Product::find($id);
+            $cart = new Cart;
 
-            $cart->user_id = $user->id; // Set the user_id field
+            $cart->user_id = $user->id;
             $cart->name = $user->name;
             $cart->phone = $user->phone;
             $cart->address = $user->address;
@@ -109,58 +104,55 @@ class HomeController extends Controller
     public function showcart()
     {
         $user = auth()->user();
-        $cart = cart::where('phone', $user->phone)->get();
-        $count = cart::where('phone', $user->phone)->count();
-        $orders = Order::where('payment_status', 2)->get();
-        $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
-        return view('user.showcart', compact('count', 'cart', 'orders','orderCount'));
+        $cart = Cart::where('user_id', $user->id)->get();
+        $count = Cart::where('user_id', $user->id)->count();
+        $orders = Order::where('user_id', $user->id)->where('payment_status', 2)->get();
+        $orderCount = Order::where('user_id', $user->id)->where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
+        return view('user.showcart', compact('count', 'cart', 'orders', 'orderCount'));
     }
+
     public function showorder()
     {
-        $orders = Order::where('payment_status', 2)->get();
-        $count = Cart::count(); // Menghitung jumlah item di cart (sesuaikan dengan kebutuhan Anda)
-        $orderCount = Order::where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar
+        $user = auth()->user();
+        $orders = Order::where('user_id', $user->id)->where('payment_status', 2)->get();
+        $count = Cart::where('user_id', $user->id)->count(); // Menghitung jumlah item di cart 
+        $orderCount = Order::where('user_id', $user->id)->where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar
         return view('user.showorder', compact('orders', 'count', 'orderCount'));
     }
 
     public function deletecart($id)
     {
-        $data = cart::find($id);
+        $data = Cart::find($id);
         $data->delete();
         return redirect()->back()->with('message', 'Product Removed Successfully');
     }
 
-
-
-
     public function updatePaymentStatus(Request $request)
-{
-    $orderId = $request->input('order_id');
-    $paymentStatus = $request->input('payment_status');
+    {
+        $orderId = $request->input('order_id');
+        $paymentStatus = $request->input('payment_status');
 
-    $order = Order::find($orderId);
-    if ($order) {
-        $order->payment_status = $paymentStatus;
-        $order->save();
+        $order = Order::find($orderId);
+        if ($order) {
+            $order->payment_status = $paymentStatus;
+            $order->save();
 
-        if ($paymentStatus == 2) {
-            // Hapus produk dari keranjang
-            $user = auth()->user();
-            $products = $order->product_name; // Asumsikan product_name menyimpan nama produk dalam bentuk array atau string
+            if ($paymentStatus == 2) {
+                $user = auth()->user();
+                $products = $order->product_name; // Asumsikan product_name menyimpan nama produk dalam bentuk array atau string
 
-            // Menghapus produk dari keranjang berdasarkan nama produk
-            foreach ($products as $product) {
-                Cart::where('user_id', $user->id)
-                    ->where('product_title', $product)
-                    ->delete();
+                foreach ($products as $product) {
+                    Cart::where('user_id', $user->id)
+                        ->where('product_title', $product)
+                        ->delete();
+                }
             }
+
+            return response()->json(['success' => true]);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => false]);
     }
-
-    return response()->json(['success' => false]);
-}
 //     public function clearCartAfterPayment()
 // {
 //     // Menghapus semua item dari keranjang untuk user yang sedang login

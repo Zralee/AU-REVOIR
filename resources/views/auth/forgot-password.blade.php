@@ -1,3 +1,8 @@
+<!-- logo icon au-revoir -->
+<link rel="icon" type="image/x-icon" href="{{ asset('assets/images/logo-au-revoir.png') }}">
+
+<title>AU REVOIR</title>
+
 <x-guest-layout>
     <x-authentication-card>
         <x-slot name="logo">
