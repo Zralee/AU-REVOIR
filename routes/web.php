@@ -33,7 +33,7 @@ Route::middleware([
 
 Route::get('/redirect', [HomeController::class, 'redirect']);
 Route::get('/', [HomeController::class, 'index']);
-Route::get('/search', [HomeController::class, 'search']);
+Route::get('/search', [HomeController::class, 'search'])->name('search');
 Route::post('/addcart/{id}', [HomeController::class, 'addcart']);
 Route::get('/showcart', [HomeController::class, 'showcart']);
 Route::get('/delete/{id}', [HomeController::class, 'deletecart']);
@@ -59,6 +59,9 @@ Route::get('/payment-success', [PaymentController::class, 'paymentSuccess'])->na
 
 Route::post('/payment-success', [HomeController::class, 'paymentSuccess'])->name('payment.success');
 
+Route::get('/payment/show', [PaymentController::class, 'show'])->name('payment.show');
+
+
 // Endpoint untuk menampilkan halaman sukses pembayaran
 Route::get('/payment-success', function () {
     return view('payment.payment_success');
@@ -81,8 +84,11 @@ Route::middleware(['auth', 'admin.rule'])->group(function () {
     Route::get('/deleteproduct/{id}', [AdminController::class, 'deleteproduct']);
     Route::get('/updateview/{id}', [AdminController::class, 'updateview']);
     Route::post('/updateproduct/{id}', [AdminController::class, 'updateproduct']);
-    Route::get('/showorder', [AdminController::class, 'showorder']);
+    Route::get('/orderadmin', [AdminController::class, 'showorder']);
     Route::get('/updatestatus/{id}', [AdminController::class, 'updatestatus']);
+    Route::get('/adminDashboard', [AdminController::class, 'dashboardAdmin']);
+
+
 });
 
 

@@ -32,25 +32,45 @@ class AdminController extends Controller
         }
     }
 
-    public function uploadproduct(Request $request)
+
+    public function dashboardAdmin()
     {
-       $data=new product;
-       $image=$request->file;
-       $imagename=time().'.'.$image->getClientOriginalExtension();
-       $request->file->move('productimage',$imagename);
-       $data->image=$imagename;
-
-       $data->title=$request->title;
-       $data->price=$request->price;
-       $data->description=$request->description;
-       $data->quantity=$request->quantity;
-
-       $data->save();
-
-       return redirect()->back()->with('message','Product Added Successfully');
-
-
+        if (!Auth::check()) {
+            return redirect('login');
+        }
+    
+        if (Auth::user()->usertype != '1') {
+            return redirect()->back();
+        }
+    
+        $orders = Order::all();
+        $products = Product::all();
+        return view('admin.dashboardAdmin', ['orders' => $orders,'products' => $products]);
     }
+
+    public function uploadproduct(Request $request)
+{
+    $data = new Product;
+
+    $image = $request->file('file');
+    $imagename = time() . '.' . $image->getClientOriginalExtension();
+    $request->file('file')->move('productimage', $imagename);
+    $data->image = $imagename;
+
+    $data->title = $request->title;
+    $data->price = $request->price;
+    $data->description = $request->description;
+
+    // Menyimpan jumlah untuk setiap ukuran
+    $data->quantity_S = $request->quantity_S;
+    $data->quantity_M = $request->quantity_M;
+    $data->quantity_L = $request->quantity_L;
+    $data->quantity_XL = $request->quantity_XL;
+
+    $data->save();
+
+    return redirect()->back()->with('message', 'Product Added Successfully');
+}
 
 
     public function showproduct()
@@ -73,31 +93,35 @@ class AdminController extends Controller
         return view('admin.updateview',compact('data'));
     }
 
-    public function updateproduct(Request $request ,$id)
-    {
-        $data = product::find($id);
-        
-        $image=$request->file;
-        if($image)
-        {
-            $imagename=time().'.'.$image->getClientOriginalExtension();
-            $request->file->move('productimage',$imagename);
-            $data->image=$imagename;
-        }
-        
-        $data->title=$request->title;
-        $data->price=$request->price;
-        $data->description=$request->description;
-        $data->quantity=$request->quantity;
-
-        $data->save();
-
-        return redirect()->back()->with('message','Product Updated Successfully');
+    public function updateproduct(Request $request, $id)
+{
+    $data = Product::find($id);
+    
+    $image = $request->file('file');
+    if ($image) {
+        $imagename = time() . '.' . $image->getClientOriginalExtension();
+        $request->file('file')->move('productimage', $imagename);
+        $data->image = $imagename;
     }
+    
+    $data->title = $request->title;
+    $data->price = $request->price;
+    $data->description = $request->description;
+
+    // Update jumlah untuk setiap ukuran
+    $data->quantity_S = $request->quantity_S;
+    $data->quantity_M = $request->quantity_M;
+    $data->quantity_L = $request->quantity_L;
+    $data->quantity_XL = $request->quantity_XL;
+
+    $data->save();
+
+    return redirect()->back()->with('message', 'Product Updated Successfully');
+}
 
     public function showorder()
     {
-        $order=order::all();
+        $order= order::all();
         return view('admin.showorder',compact('order'));
     }
 

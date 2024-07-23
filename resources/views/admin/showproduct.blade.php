@@ -33,7 +33,11 @@
             <tr style="background-color: grey;">
                 <td style="padding:20px;">Title</td>
                 <td style="padding:20px;">Description</td>
-                <td style="padding:20px;">Quantity</td>
+                <!-- <td style="padding:20px;">Quantity</td> -->
+                <td style="padding:20px;">Quantity S</td>
+                <td style="padding:20px;">Quantity M</td>
+                <td style="padding:20px;">Quantity L</td>
+                <td style="padding:20px;">Quantity XL</td>
                 <td style="padding:20px;">Price</td>
                 <td style="padding:20px;">Image</td>
                 <td style="padding:20px;">Update</td>
@@ -45,7 +49,11 @@
             <tr align="center" style="background-color: black; ">
                 <td>{{$product->title}}</td>
                 <td>{{$product->description}}</td>
-                <td>{{$product->quantity}}</td>
+                <!-- <td>{{$product->quantity}}</td> -->
+                <td>{{$product->quantity_S}}</td>
+                <td>{{$product->quantity_M}}</td>
+                <td>{{$product->quantity_L}}</td>
+                <td>{{$product->quantity_XL}}</td>
                 <td>{{$product->price}}</td>
                 <td>
                     <img height="100 px" width="100 px" src="/productimage/{{$product->image}}">

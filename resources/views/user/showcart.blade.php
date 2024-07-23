@@ -118,6 +118,7 @@
             <thead>
                 <tr>
                     <th>Product Name</th>
+                    <th>Size</th>
                     <th>Quantity</th>
                     <th>Price</th>
                     <th>Action</th>
@@ -131,6 +132,10 @@
                         <td>
                             <input type="text" name="productname[]" value="{{$carts->product_title}}" hidden="">
                             {{$carts->product_title}}
+                        </td>
+                        <td>
+                            <input type="text" name="size[]" value="{{$carts->size}}" hidden="">
+                            {{$carts->size}}
                         </td>
                         <td>
                             <input type="text" name="quantity[]" value="{{$carts->quantity}}" hidden="">
@@ -149,7 +154,17 @@
             </tbody>
         </table>
 
-        <button type="button" class="btn btn-primary pay-now-btn" id="payNowBtn">Pay Now</button>
+        @if(session('pending_order'))
+            @php
+                $pendingOrder = session('pending_order');
+            @endphp
+            <div class="alert alert-info mt-4">
+                <p>Please fill in the data first before checking the payment. If you have filled in the data, you can continue the payment by pressing the following button.</p>
+                <a href="{{ route('payment.show', ['orders' => $pendingOrder['orders'], 'snapToken' => $pendingOrder['snapToken'], 'courierFee' => $pendingOrder['courierFee'], 'message' => 'Retry Payment', 'orderId' => $pendingOrder['orders'][0]]) }}" class="btn btn-primary">Check Payment</a>
+            </div>
+        @endif
+
+        <button type="button" class="btn btn-primary pay-now-btn" id="payNowBtn">Please fill your order data first</button>
 
         <div class="recipient-form" id="recipientForm">
             <h4>Recipient Details</h4>

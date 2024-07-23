@@ -61,10 +61,31 @@
                     <input style="color: black;" type="text" name="description" value="{{$data->description}}" required>
                 </div>
 
-                <div style="padding: 15px;">
+                <!-- <div style="padding: 15px;">
                     <label>Quantity</label>
                     <input style="color: black;" type="text" name="quantity" value="{{$data->quantity}}" required>
+                </div> -->
+                <div style="padding: 15px;">
+                    <label>Quantity S</label>
+                    <input style="color: black;" type="number" name="quantity_S" value="{{$data->quantity_S}}" required>
                 </div>
+
+                <div style="padding: 15px;">
+                    <label>Quantity M</label>
+                    <input style="color: black;" type="number" name="quantity_M" value="{{$data->quantity_M}}" required>
+                </div>
+
+                <div style="padding: 15px;">
+                    <label>Quantity L</label>
+                    <input style="color: black;" type="number" name="quantity_L" value="{{$data->quantity_L}}" required>
+                </div>
+
+                <div style="padding: 15px;">
+                    <label>Quantity XL</label>
+                    <input style="color: black;" type="number" name="quantity_XL" value="{{$data->quantity_XL}}" required>
+                </div>
+
+
 
                 <div style="padding: 15px;">
                     <label>Old Image</label>

@@ -71,7 +71,7 @@
                     <h2>Search Product</h2>
                     <a href="{{ url('/') }}">View All Products <i class="fa fa-angle-right"></i></a>
 
-                    <form action="{{ url('search') }}" class="form-inline mt-3 justify-content-center">
+                    <form action="{{ url('/search') }}" class="form-inline mt-3 justify-content-center">
                         @csrf
                         <input class="form-control mr-2" type="text" name="search" placeholder="Search" value="{{ old('search', $search ?? '') }}">
                         <button type="submit" class="btn btn-primary">Search</button>
@@ -80,34 +80,51 @@
             </div>
         </div>
 
+
+
         <div class="row mt-4">
-            @if(isset($data) && $data->count() > 0)
-                @foreach($data as $product)
-                    <div class="col-md-3 mb-4 d-flex align-items-stretch flex-row">
-                        <div class="product-item d-flex flex-column">
-                            <a href="#"><img class="img-fluid product-image" width="400" height="400"  src="/productimage/{{ $product->image }}" alt=""></a>
-                            <div class="down-content text-center flex-grow-1">
-                                <a href="#"><h4 class="product-title">{{ $product->title }}</h4></a>
-                                <p></p>
-                                
-                                <h6></h6>
-                                <p class="product-price">Rp.{{ number_format($product->price, 0, ',', '.') }}</p>
-                                <form action="{{ url('addcart', $product->id) }}" method="post">
-                                    @csrf
-                                    <input type="number" value="1" min="1" class="form-control mx-auto quantity-input" name="quantity">
-                                    <br>
-                                    <input class="btn btn-primary" type="submit" value="Add To Cart">
-                                </form>
+    @if(isset($data) && $data->count() > 0)
+        @foreach($data as $product)
+            <div class="col-md-3 mb-4 d-flex align-items-stretch flex-row">
+                <div class="product-item d-flex flex-column">
+                    <a href="#"><img class="img-fluid product-image" width="400" height="400" src="/productimage/{{ $product->image }}" alt=""></a>
+                    <div class="down-content text-center flex-grow-1">
+                        <a href="#"><h4 class="product-title">{{ $product->title }}</h4></a>
+                        <p></p>
+                        
+                        <h6></h6>
+                        <p class="product-price">Rp.{{ number_format($product->price, 0, ',', '.') }}</p>
+                        
+                        <form action="{{ url('addcart', $product->id) }}" method="post">
+                            @csrf
+                            <div class="form-group">
+                                <label for="size">Select Size:</label>
+                                <select name="size" id="size" class="form-control">
+                                    <option value="S">S ({{ $product->quantity_S }} available)</option>
+                                    <option value="M">M ({{ $product->quantity_M }} available)</option>
+                                    <option value="L">L ({{ $product->quantity_L }} available)</option>
+                                    <option value="XL">XL ({{ $product->quantity_XL }} available)</option>
+                                </select>
                             </div>
-                        </div>
+                            <input type="number" value="1" min="1" class="form-control mx-auto quantity-input" name="quantity">
+                            <br>
+                            <input class="btn btn-primary" type="submit" value="Add To Cart">
+                        </form>
                     </div>
-                @endforeach
-            @else
-                <div class="col-md-12 text-center">
-                    <h1>Product yang anda cari tidak ditemukan!</h1>
                 </div>
-            @endif
+            </div>
+        @endforeach
+    @else
+        <div class="col-md-12 text-center">
+            <h1>Product yang anda cari tidak ditemukan!</h1>
         </div>
+    @endif
+</div>
+
+
+
+
+
 
         @if(method_exists($data, 'links'))
             <div class="d-flex justify-content-center">

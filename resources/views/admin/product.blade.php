@@ -54,9 +54,25 @@
                     <input style="color: black;" type="text" name="description" placeholder="Give a description" required>
                 </div>
 
-                <div style="padding: 15px;">
-                    <label>Quantity</label>
+                <!-- <div style="padding: 15px;">
+                    <label>Quantity </label>
                     <input style="color: black;" type="text" name="quantity" placeholder="Product Quantity" required>
+                </div> -->
+                <div style="padding: 15px;">
+                    <label>Quantity S</label>
+                    <input style="color: black;" type="number" name="quantity_S" placeholder="Quantity Size S" required>
+                </div>
+                <div style="padding: 15px;">
+                    <label>Quantity M</label>
+                    <input style="color: black;" type="number" name="quantity_M" placeholder="Quantity Size M" required>
+                </div>
+                <div style="padding: 15px;">
+                    <label>Quantity L</label>
+                    <input style="color: black;" type="number" name="quantity_L" placeholder="Quantity Size L" required>
+                </div>
+                <div style="padding: 15px;">
+                    <label>Quantity XL</label>
+                    <input style="color: black;" type="number" name="quantity_XL" placeholder="Quantity Size XL" required>
                 </div>
 
                 <div style="padding: 15px;">

@@ -90,6 +90,7 @@
                 @foreach($orders as $order)
                     <div class="order">
                         <p><span>Product Name:</span> {{ $order->product_name }}</p>
+                        <p><span>Size:</span> {{ $order->size }}</p>
                         <p><span>Quantity:</span> {{ $order->quantity }}</p>
                         <p><span>Price:</span> Rp.{{ number_format($order->price, 0, ',', '.') }}</p>
                     </div>

@@ -13,13 +13,26 @@ return new class extends Migration
      */
     public function up()
     {
+        // Schema::create('products', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('title')->nullable();
+        //     $table->string('price')->nullable();
+        //     $table->string('description')->nullable();
+        //     $table->string('quantity')->nullable();
+        //     $table->string('image')->nullable();
+        //     $table->timestamps();
+        // });
+
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
             $table->string('price')->nullable();
             $table->string('description')->nullable();
-            $table->string('quantity')->nullable();
             $table->string('image')->nullable();
+            $table->integer('quantity_S')->nullable();
+            $table->integer('quantity_M')->nullable();
+            $table->integer('quantity_L')->nullable();
+            $table->integer('quantity_XL')->nullable();
             $table->timestamps();
         });
     }

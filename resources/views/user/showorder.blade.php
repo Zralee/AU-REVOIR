@@ -99,6 +99,7 @@
                     <th>Recipient Address</th>
                     <th>Recipient Email</th>
                     <th>Product Name</th>
+                    <th>Size</th>
                     <th>Quantity</th>
                     <th>Price</th>
                     <th>Shipping Agency</th>
@@ -112,6 +113,7 @@
                     <td>{{ $order->recipient_address }}</td>
                     <td>{{ $order->recipient_email }}</td>
                     <td>{{ $order->product_name }}</td>
+                    <td>{{ $order->size }}</td>
                     <td>{{ $order->quantity }}</td>
                     <td>{{ $order->price }}</td>
                     <td>{{ $order->courier }}</td>

@@ -60,46 +60,50 @@ class HomeController extends Controller
         if ($user) {
             $cart = Cart::where('user_id', $user->id)->get();
             $count = Cart::where('user_id', $user->id)->count();
+            $orderCount = Order::where('user_id', $user->id)->where('payment_status', 2)->count(); // Menghitung jumlah order yang sudah dibayar 
+
             if ($search == '') {
                 $data = Product::paginate(8);
-                return view('user.home', compact('data', 'count', 'search'));
+                return view('user.home', compact('data', 'orderCount', 'search'));
             }
 
-            $data = Product::where('title', 'LIKE', '%' . $search . '%')->paginate(4)->withQueryString();
-            return view('user.home', compact('data', 'count', 'search'));
+            $data = Product::where('title', 'LIKE', '%' . $search . '%')->paginate(8)->withQueryString();
+            return view('user.home', compact('data', 'search'));
         } else {
             if ($search == '') {
-                $data = Product::paginate(3);
+                $data = Product::paginate(8);
                 return view('user.home', compact('data', 'search'));
             }
 
-            $data = Product::where('title', 'LIKE', '%' . $search . '%')->paginate(4)->withQueryString();
-            return view('user.home', compact('data', 'search'));
+            $data = Product::where('title', 'LIKE', '%' . $search . '%')->paginate(8)->withQueryString();
+            return view('user.home', compact('data' ,'search'));
         }
     }
 
     public function addcart(Request $request, $id)
-    {
-        if (Auth::id()) {
-            $user = auth()->user();
-            $product = Product::find($id);
-            $cart = new Cart;
+{
+    if (Auth::id()) {
+        $user = auth()->user();
+        $product = Product::find($id);
+        $cart = new Cart;
 
-            $cart->user_id = $user->id;
-            $cart->name = $user->name;
-            $cart->phone = $user->phone;
-            $cart->address = $user->address;
-            $cart->product_title = $product->title;
-            $cart->price = $product->price;
-            $cart->quantity = $request->quantity;
+        $cart->user_id = $user->id;
+        $cart->name = $user->name;
+        $cart->phone = $user->phone;
+        $cart->address = $user->address;
+        $cart->product_title = $product->title;
+        $cart->price = $product->price;
+        $cart->quantity = $request->quantity;
+        $cart->size = $request->size; // Menyimpan ukuran yang dipilih
 
-            $cart->save();
+        $cart->save();
 
-            return redirect()->back()->with('message', 'Product Added To Cart Successfully');
-        } else {
-            return redirect('login');
-        }
+        return redirect()->back()->with('message', 'Product Added To Cart Successfully');
+    } else {
+        return redirect('login');
     }
+}
+
 
     public function showcart()
     {
@@ -182,14 +186,43 @@ public function confirmOrder(Request $request)
     foreach ($request->productname as $key => $productname) {
         $product = Product::where('title', $productname)->first();
 
-        // Check if the product exists and has enough stock
-        if ($product && $product->quantity >= $request->quantity[$key]) {
+        if ($product) {
+            $selectedSize = $request->size[$key];
+            $selectedQuantity = $request->quantity[$key];
+
+            // Cek ketersediaan stok berdasarkan ukuran
+            switch ($selectedSize) {
+                case 'S':
+                    if ($product->quantity_S < $selectedQuantity) {
+                        return redirect()->back()->with('error', 'Not enough stock for ' . $productname . ' size S');
+                    }
+                    break;
+                case 'M':
+                    if ($product->quantity_M < $selectedQuantity) {
+                        return redirect()->back()->with('error', 'Not enough stock for ' . $productname . ' size M');
+                    }
+                    break;
+                case 'L':
+                    if ($product->quantity_L < $selectedQuantity) {
+                        return redirect()->back()->with('error', 'Not enough stock for ' . $productname . ' size L');
+                    }
+                    break;
+                case 'XL':
+                    if ($product->quantity_XL < $selectedQuantity) {
+                        return redirect()->back()->with('error', 'Not enough stock for ' . $productname . ' size XL');
+                    }
+                    break;
+                default:
+                    return redirect()->back()->with('error', 'Invalid size selected for ' . $productname);
+            }
+
             // Check if the order already exists
             $existingOrder = Order::where([
                 ['user_id', '=', $user->id],
-                ['product_name', '=', $request->productname[$key]],
+                ['product_name', '=', $productname],
+                ['size', '=', $selectedSize],
                 ['price', '=', $request->price[$key]],
-                ['quantity', '=', $request->quantity[$key]],
+                ['quantity', '=', $selectedQuantity],
                 ['recipient_name', '=', $recipientName],
                 ['recipient_email', '=', $recipientEmail],
                 ['recipient_address', '=', $recipientAddress],
@@ -204,11 +237,15 @@ public function confirmOrder(Request $request)
             }
 
             $order = new Order;
-
-            $order->user_id = $user->id; // Set the user_id field
-            $order->product_name = $request->productname[$key];
+            $order->user_id = $user->id;
+            $order->product_name = $productname;
+            $order->size = $selectedSize;
             $order->price = $request->price[$key];
-            $order->quantity = $request->quantity[$key];
+            $order->quantity = $selectedQuantity;
+            // $order->quantity_S = $request->quantity_S[$key];
+            // $order->quantity_M = $request->quantity_M[$key];
+            // $order->quantity_L = $request->quantity_L[$key];
+            // $order->quantity_XL = $request->quantity_XL[$key];
             $order->name = $name;
             $order->phone = $phone;
             $order->address = $address;
@@ -217,28 +254,39 @@ public function confirmOrder(Request $request)
             $order->recipient_address = $recipientAddress;
             $order->courier = $courier;
             $order->courier_fee = $courierFee;
-            $order->total_amount = ($request->price[$key] * $request->quantity[$key]) + $courierFee; // Menghitung total_amount
+            $order->total_amount = ($request->price[$key] * $selectedQuantity) + $courierFee;
             $order->status = 'not delivered';
-            $order->payment_status = '1'; // Menggunakan string untuk inisialisasi payment_status
+            $order->payment_status = '1'; // Tetap menggunakan '1' untuk payment_status
 
             $order->save();
 
-            // Decrease the product stock
-            $product->quantity -= $request->quantity[$key];
+            switch ($selectedSize) {
+                case 'S':
+                    $product->quantity_S -= $selectedQuantity;
+                    break;
+                case 'M':
+                    $product->quantity_M -= $selectedQuantity;
+                    break;
+                case 'L':
+                    $product->quantity_L -= $selectedQuantity;
+                    break;
+                case 'XL':
+                    $product->quantity_XL -= $selectedQuantity;
+                    break;
+            }
+
             $product->save();
 
             $orders[] = $order->id;
         } else {
-            return redirect()->back()->with('error', 'Not enough stock for ' . $productname);
+            return redirect()->back()->with('error', 'Product ' . $productname . ' does not exist');
         }
     }
 
-    // Check if orders were created
     if (empty($orders)) {
         return redirect()->back()->with('error', 'No orders were created.');
     }
 
-    // Prepare $payload based on $orders
     $item_details = [];
     $gross_amount = 0;
 
@@ -249,6 +297,7 @@ public function confirmOrder(Request $request)
             'price'         => $order->price,
             'quantity'      => $order->quantity,
             'name'          => $order->product_name,
+            'size'          => $order->size,
             'total'         => $order->total_amount,
             'merchant_name' => config('app.name'),
         ];
@@ -265,34 +314,40 @@ public function confirmOrder(Request $request)
         'merchant_name' => config('app.name'),
     ];
 
-    // Add courier fee to total gross amount
     $gross_amount += $courierFee;
 
-    // Construct the $payload array
     $payload = [
         'transaction_details' => [
-            'order_id'     => $orders[0], // Assuming first order's ID as order_id
-            'gross_amount' => $gross_amount, // Total gross amount including courier fee
+            'order_id'     => $orders[0],
+            'gross_amount' => $gross_amount,
         ],
         'customer_details' => [
             'first_name' => $recipientName,
             'email'      => $recipientEmail,
         ],
-        'item_details' => $item_details, // Array of item details for each order
+        'item_details' => $item_details,
     ];
 
-    // Create Snap Token
     $snapToken = $this->createSnapTokenService->getSnapToken($payload);
 
-    // Redirect to payment gateway
+    // Save order details in session
+    session()->put('pending_order', [
+        'orders' => $orders,
+        'snapToken' => $snapToken,
+        'courierFee' => $courierFee,
+    ]);
+
     return redirect()->route('payment.show', [
-        'orders' => $orders,  // Passing all orders
+        'orders' => $orders,
         'snapToken' => $snapToken,
         'courierFee' => $courierFee,
         'message' => 'Product Ordered Successfully',
-        'orderId' => $orders[0] // Assuming first order's ID as order_id
+        'orderId' => $orders[0]
     ]);
 }
+
+
+
 
 
 // Tambahkan metode ini untuk mengupdate payment_status setelah pembayaran berhasil
