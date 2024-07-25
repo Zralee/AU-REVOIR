@@ -71,14 +71,14 @@
                     <h2>Search Product</h2>
                     <a href="{{ url('/') }}">View All Products <i class="fa fa-angle-right"></i></a>
 
-                    <form action="{{ url('/search') }}" class="form-inline mt-3 justify-content-center">
-                        @csrf
+                    <form action="{{ url('/search') }}" method="GET" class="form-inline mt-3 justify-content-center">
                         <input class="form-control mr-2" type="text" name="search" placeholder="Search" value="{{ old('search', $search ?? '') }}">
                         <button type="submit" class="btn btn-primary">Search</button>
                     </form>
                 </div>
             </div>
         </div>
+
 
 
 

@@ -20,7 +20,6 @@ $amount += $order->quantity;
 @endphp
 @endforeach
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,7 +38,7 @@ $amount += $order->quantity;
 
         .dashboard-stats {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             margin-top: 20px;
         }
 
@@ -53,8 +52,23 @@ $amount += $order->quantity;
         }
 
         .chart-container {
-            width: 70%;
+            width: 90%;
             margin: 20px auto;
+        }
+
+        .progress-container {
+            width: 50%;
+            margin: 20px auto;
+        }
+
+        .progress-bar {
+            height: 20px;
+        }
+
+        .chart-container-half {
+            width: 48%;
+            display: inline-block;
+            vertical-align: top;
         }
     </style>
 </head>
@@ -76,27 +90,37 @@ $amount += $order->quantity;
             @endif
 
             <div class="dashboard-stats">
+                <!-- Total Profit -->
                 <div class="stat-box">
                     <h4>Total Profit</h4>
-                    <p>{{ $totalamount }}</p>
+                    <p>Rp <span id="totalProfit">{{ number_format($totalamount, 0, ',', '.') }}</span></p>
                 </div>
+
+                <!-- Total Products Sold -->
                 <div class="stat-box">
                     <h4>Total Products Sold</h4>
-                    <p>{{ $amount }}</p>
+                    <p><span id="totalSold">{{ $amount }}</span></p>
                 </div>
+
+                <!-- Total Products Remaining -->
                 <div class="stat-box">
                     <h4>Total Products Remaining</h4>
-                    <p>{{ $productTersisa }}</p>
+                    <p><span id="totalRemaining">{{ $productTersisa }}</span></p>
                 </div>
             </div>
 
+           
+
+            <!-- Chart Containers -->
             <div class="chart-container">
-                <h3>Profit Chart</h3>
-                <canvas id="profitChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Product Statistics</h3>
-                <canvas id="productChart"></canvas>
+                <div class="chart-container-half">
+                    <h3>Profit Chart</h3>
+                    <canvas id="profitChart"></canvas>
+                </div>
+                <div class="chart-container-half">
+                    <h3>Product Statistics</h3>
+                    <canvas id="productChart"></canvas>
+                </div>
             </div>
 
         </div>
@@ -112,6 +136,37 @@ $amount += $order->quantity;
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Data from Blade template
+        const totalAmount = @json($totalamount);
+        const amount = @json($amount);
+        const productTersisa = @json($productTersisa);
+
+        // Maximum values for progress bars
+        const maxProfit = 10000000; // Adjust according to your expected max profit (IDR)
+        const maxSold = 500; // Adjust according to your expected max products sold
+        const maxRemaining = 100; // Adjust according to your expected max products remaining
+
+        // Update Progress Bars
+        function updateProgressBars() {
+            // Total Profit
+            const profitPercentage = Math.min((totalAmount / maxProfit) * 100, 100);
+            document.querySelector('#profitProgress .progress-bar').style.width = `${profitPercentage}%`;
+            document.querySelector('#profitProgress .progress-bar').setAttribute('aria-valuenow', totalAmount);
+            document.querySelector('#totalProfitProgress').textContent = totalAmount.toLocaleString('id-ID');
+
+            // Total Products Sold
+            const soldPercentage = Math.min((amount / maxSold) * 100, 100);
+            // Update your total sold progress bar here if you add one
+
+            // Total Products Remaining
+            const remainingPercentage = Math.min((productTersisa / maxRemaining) * 100, 100);
+            // Update your total remaining progress bar here if you add one
+        }
+
+        // Call function on page load
+        document.addEventListener('DOMContentLoaded', updateProgressBars);
+
+        // Chart.js for Profit Chart
         const ctxProfit = document.getElementById('profitChart').getContext('2d');
         const profitChart = new Chart(ctxProfit, {
             type: 'line',
@@ -119,13 +174,13 @@ $amount += $order->quantity;
                 labels: ['Total Profit'],
                 datasets: [{
                     label: 'Total Profit',
-                    data: [{{ $totalamount }}],
+                    data: [totalAmount],
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1,
                     fill: true,
                     tension: 0.1
-                }],
+                }]
             },
             options: {
                 scales: {
@@ -136,6 +191,7 @@ $amount += $order->quantity;
             }
         });
 
+        // Chart.js for Product Statistics
         const ctxProduct = document.getElementById('productChart').getContext('2d');
         const productChart = new Chart(ctxProduct, {
             type: 'doughnut',
@@ -143,7 +199,7 @@ $amount += $order->quantity;
                 labels: ['Total Products Sold', 'Total Products Remaining'],
                 datasets: [{
                     label: 'Product Statistics',
-                    data: [{{ $amount }}, {{ $productTersisa }}],
+                    data: [amount, productTersisa],
                     backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
                     borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
                     borderWidth: 0.5

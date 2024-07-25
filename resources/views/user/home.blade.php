@@ -65,10 +65,12 @@
                   @auth
 
                   <li class="nav-item">
-                    <a class="nav-link" href="{{url('showcart')}}">
-                    <i class="fas fa-shopping-cart"></i>  
-                    Cart[{{$count}}]</a>
+                      <a class="nav-link" href="{{ url('showcart') }}">
+                          <i class="fas fa-shopping-cart"></i>  
+                          Cart [{{ $count }}]
+                      </a>
                   </li>
+
 
                   <li class="nav-item">
                     <a class="nav-link" href="{{ url('showorder') }}">

@@ -129,7 +129,7 @@ class AdminController extends Controller
     {
         $order=order::find($id);
 
-        $order->status='delivered';
+        $order->status='Delivered';
         $order->save();
 
         return redirect()->back();
